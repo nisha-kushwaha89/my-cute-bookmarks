@@ -143,29 +143,6 @@
       background: #0f172a;
       color: #fff;
     }
-
-    /* 📱 Responsive Design */
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .search {
-        width: 100%;
-        flex-direction: column;
-        gap: 8px;
-      }
-      input[type="text"] {
-        width: 100%;
-      }
-      .actions button {
-        flex: 1;
-        text-align: center;
-      }
-    }
   </style>
 </head>
 <body>
@@ -225,7 +202,7 @@
             <div class="actions">
               <button onclick="window.open('${bm.url}', '_blank')">Open</button>
               <button onclick="editBookmark(${i})">Edit</button>
-              <button onclick="deleteBookmark(${i})">Del</button>
+              <button onclick="deleteBookmark(${i})">Delete</button>
             </div>
           `;
           grid.appendChild(card);
@@ -233,11 +210,13 @@
       }
     }
 
-    function openModal() {
+    function openModal(isEdit = false) {
       modal.classList.add('active');
-      titleInput.value = '';
-      urlInput.value = '';
-      editIndex = null;
+      if (!isEdit) {  // ✅ Add karte time clear karo
+        titleInput.value = '';
+        urlInput.value = '';
+        editIndex = null;
+      }
     }
     function closeModal() {
       modal.classList.remove('active');
@@ -262,7 +241,7 @@
       titleInput.value = bm.title;
       urlInput.value = bm.url;
       editIndex = i;
-      openModal();
+      openModal(true); // ✅ edit ke time input clear na ho
     }
 
     function deleteBookmark(i) {
@@ -285,7 +264,7 @@
           <div class="actions">
             <button onclick="window.open('${bm.url}', '_blank')">Open</button>
             <button onclick="editBookmark(${i})">Edit</button>
-            <button onclick="deleteBookmark(${i})">Del</button>
+            <button onclick="deleteBookmark(${i})">Delete</button>
           </div>
         `;
         grid.appendChild(card);
