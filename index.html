@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cute Bookmarks</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    header p {
+      margin: 5px 0 0;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .search {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      width: 250px;
+      background: #1e293b;
+      color: #fff;
+      flex: 1;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+    }
+    .grid {
+      display: grid;
+      gap: 15px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.2s ease;
+      word-wrap: break-word;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .card-url {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      word-break: break-all;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .empty {
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 40px;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    label {
+      font-size: 0.9rem;
+    }
+    input[type="url"], input[type="text"] {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background: #0f172a;
+      color: #fff;
+    }
+
+    /* 📱 Responsive Design */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .search {
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+      }
+      input[type="text"] {
+        width: 100%;
+      }
+      .actions button {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>📘 My Cute Bookmarks</h1>
+      <p>Apne favourite links safe rakh lo ✨</p>
+    </div>
+    <div class="search">
+      <input type="text" id="search" placeholder="Search bookmarks...">
+      <button onclick="openModal()">+ Add Bookmark</button>
+    </div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty">Saved to your browser (local) — refresh safe hai ✨</p>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <label>Title</label>
+      <input type="text" id="titleInput">
+      <label>URL</label>
+      <input type="url" id="urlInput">
+      <button onclick="saveBookmark()">Save</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const modal = document.getElementById('modal');
+    const titleInput = document.getElementById('titleInput');
+    const urlInput = document.getElementById('urlInput');
+    let editIndex = null;
+
+    function loadBookmarks() {
+      return JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    }
+    function saveBookmarks(bookmarks) {
+      localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+    }
+
+    function render() {
+      const bookmarks = loadBookmarks();
+      grid.innerHTML = '';
+      if (bookmarks.length === 0) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        bookmarks.forEach((bm, i) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="card-title">${bm.title}</div>
+            <div class="card-url">${bm.url}</div>
+            <div class="actions">
+              <button onclick="window.open('${bm.url}', '_blank')">Open</button>
+              <button onclick="editBookmark(${i})">Edit</button>
+              <button onclick="deleteBookmark(${i})">Del</button>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    function openModal() {
+      modal.classList.add('active');
+      titleInput.value = '';
+      urlInput.value = '';
+      editIndex = null;
+    }
+    function closeModal() {
+      modal.classList.remove('active');
+    }
+
+    function saveBookmark() {
+      const title = titleInput.value.trim();
+      let url = urlInput.value.trim();
+      if (!title || !url) return;
+      if (!url.startsWith('http')) url = 'https://' + url;
+      const bookmarks = loadBookmarks();
+      if (editIndex !== null) bookmarks[editIndex] = { title, url };
+      else bookmarks.push({ title, url });
+      saveBookmarks(bookmarks);
+      render();
+      closeModal();
+    }
+
+    function editBookmark(i) {
+      const bookmarks = loadBookmarks();
+      const bm = bookmarks[i];
+      titleInput.value = bm.title;
+      urlInput.value = bm.url;
+      editIndex = i;
+      openModal();
+    }
+
+    function deleteBookmark(i) {
+      const bookmarks = loadBookmarks();
+      bookmarks.splice(i, 1);
+      saveBookmarks(bookmarks);
+      render();
+    }
+
+    document.getElementById('search').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      const bookmarks = loadBookmarks().filter(b => b.title.toLowerCase().includes(term) || b.url.toLowerCase().includes(term));
+      grid.innerHTML = '';
+      bookmarks.forEach((bm, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-title">${bm.title}</div>
+          <div class="card-url">${bm.url}</div>
+          <div class="actions">
+            <button onclick="window.open('${bm.url}', '_blank')">Open</button>
+            <button onclick="editBookmark(${i})">Edit</button>
+            <button onclick="deleteBookmark(${i})">Del</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
